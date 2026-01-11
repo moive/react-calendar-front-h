@@ -2,7 +2,6 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import { VitePWA } from "vite-plugin-pwa";
 
-// https://vitejs.dev/config/
 export default defineConfig({
   plugins: [
     react({
@@ -10,8 +9,18 @@ export default defineConfig({
       jsxRuntime: "automatic",
     }),
     VitePWA({
-      registerType: "autoUpdate",
-      includeAssets: ["favicon.ico", "apple-touch-icon.png", "masked-icon.svg"],
+      strategies: "injectManifest",
+      srcDir: "public",
+      filename: "sw.js",
+      injectManifest: {
+        globPatterns: ["**/*.{js,css,html,ico,png,svg,jpg,jpeg,webp,woff,woff2}"],
+        globIgnores: ["**/node_modules/**/*"],
+        maximumFileSizeToCacheInBytes: 5000000,
+      },
+      devOptions: {
+        enabled: true,
+        type: "module",
+      },
       manifest: {
         name: "Calendar App",
         short_name: "Calendar",

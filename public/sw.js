@@ -1,75 +1,77 @@
-const CACHE_NAME = "calendar-app-v1";
-const urlsToCache = ["/", "/index.html"];
+import { precacheAndRoute } from "workbox-precaching";
 
-// Install event - cache resources
-self.addEventListener("install", (event) => {
-  console.log("[Service Worker] Instalando...");
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      console.log("[Service Worker] Recursos en caché");
-      return cache.addAll(urlsToCache);
-    })
-  );
-  self.skipWaiting();
-});
+// Workbox maneja la precaché automática (workbox-precache-v2)
+precacheAndRoute(self.__WB_MANIFEST || []);
 
-// Activate event - clean up old caches
-self.addEventListener("activate", (event) => {
-  console.log("[Service Worker] Activado");
-  event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames.map((cacheName) => {
-          if (cacheName !== CACHE_NAME) {
-            console.log("[Service Worker] Limpiando caché antiguo:", cacheName);
-            return caches.delete(cacheName);
-          }
-        })
-      );
-    })
-  );
-  self.clients.claim();
-});
+// URLs de API que tendrán fallback offline
+const apiOfflineFallbacks = [
+  "http://localhost:4000/api/auth/renew",
+  "http://localhost:4000/api/events",
+];
 
-// Fetch event - serve from cache, fallback to network
+// Fetch - manejo de APIs con fallback offline
 self.addEventListener("fetch", (event) => {
-  // Skip non-GET requests
-  if (event.request.method !== "GET") {
-    return;
-  }
+  const { request } = event;
+  const url = new URL(request.url);
 
-  // Skip API calls - always go to network
-  if (event.request.url.includes("/api/")) {
-    event.respondWith(
-      fetch(event.request).catch(() => new Response("Network error", { status: 500 }))
-    );
-    return;
-  }
-
-  // For static assets and pages: cache first, fallback to network
-  event.respondWith(
-    caches
-      .match(event.request)
+  // 1. Manejo de APIs específicas con fallback
+  if (apiOfflineFallbacks.includes(request.url)) {
+    const resp = fetch(request)
       .then((response) => {
-        if (response) {
-          return response;
+        if (!response) {
+          return caches.match(request);
         }
-        return fetch(event.request).then((response) => {
-          // Don't cache non-200 responses
-          if (!response || response.status !== 200) {
-            return response;
-          }
-          // Clone the response
-          const responseToCache = response.clone();
-          caches.open(CACHE_NAME).then((cache) => {
-            cache.put(event.request, responseToCache);
-          });
-          return response;
+
+        caches.open("cache-dynamic").then((cache) => {
+          cache.put(request, response);
         });
+
+        return response.clone();
       })
-      .catch(() => {
-        // Return offline page if available
-        return caches.match("/");
-      })
+      .catch((err) => {
+        console.log("[SW] Offline response para:", request.url);
+        return caches.match(request);
+      });
+
+    event.respondWith(resp);
+    return;
+  }
+
+  // 2. Manejo general para el resto de recursos (assets, HTML, etc.)
+  // Estrategia: Cache First, fallback a Network
+  event.respondWith(
+    caches.match(request).then((cachedResponse) => {
+      if (cachedResponse) {
+        return cachedResponse;
+      }
+
+      return fetch(request)
+        .then((response) => {
+          // Solo cachear respuestas válidas del mismo origen
+          if (response && response.status === 200 && url.origin === location.origin) {
+            const responseClone = response.clone();
+            caches.open("cache-dynamic").then((cache) => {
+              cache.put(request, responseClone);
+            });
+          }
+          return response;
+        })
+        .catch(() => {
+          // Si es una navegación (HTML), devolver index.html desde caché
+          if (request.mode === "navigate") {
+            return caches.match("/index.html");
+          }
+          return new Response("Offline", { status: 503 });
+        });
+    })
   );
+});
+
+self.addEventListener("install", async (event) => {
+  const cache = await caches.open("cache-1");
+  await cache.addAll([
+    "https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css",
+    "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.0-2/css/all.min.css",
+    "/favicon.ico",
+  ]);
 });
