@@ -97,10 +97,17 @@ export const CalendarModal = () => {
       return setTitleValid(false);
     }
 
+    // Convert Date objects to ISO strings for Redux
+    const eventData = {
+      ...formValues,
+      start: formValues.start instanceof Date ? formValues.start.toISOString() : formValues.start,
+      end: formValues.end instanceof Date ? formValues.end.toISOString() : formValues.end,
+    };
+
     if (activeEvent) {
-      dispatch(eventStartUpdate(formValues));
+      dispatch(eventStartUpdate(eventData));
     } else {
-      dispatch(eventStartAddNew(formValues));
+      dispatch(eventStartAddNew(eventData));
     }
 
     setTitleValid(true);

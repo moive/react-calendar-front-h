@@ -49,6 +49,12 @@ export const startChecking = () => {
   return async (dispatch) => {
     try {
       const resp = await fetchConToken("auth/renew");
+
+      if (!resp.ok) {
+        dispatch(checkingFinish());
+        return;
+      }
+
       const body = await resp.json();
 
       if (body.ok) {
@@ -62,10 +68,14 @@ export const startChecking = () => {
           })
         );
       } else {
+        localStorage.removeItem("token");
+        localStorage.removeItem("token-init-date");
         dispatch(checkingFinish());
       }
     } catch (error) {
       console.error("Error checking token:", error);
+      localStorage.removeItem("token");
+      localStorage.removeItem("token-init-date");
       dispatch(checkingFinish());
     }
   };
