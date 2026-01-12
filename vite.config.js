@@ -64,6 +64,29 @@ export default defineConfig({
   build: {
     outDir: "dist",
     sourcemap: false,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          // Separar React y React-DOM
+          "react-vendor": ["react", "react-dom", "react-router-dom"],
+
+          // Separar Redux si lo usas
+          "redux-vendor": ["react-redux", "@reduxjs/toolkit"],
+
+          // Separar librerías de UI si las usas (Bootstrap, etc)
+          // 'ui-vendor': ['bootstrap', 'react-bootstrap'],
+
+          // Separar librerías grandes como moment, date-fns, etc
+          // 'date-vendor': ['moment', 'date-fns'],
+        },
+        // Nombres de archivos con hash para mejor caching
+        chunkFileNames: "assets/js/[name]-[hash].js",
+        entryFileNames: "assets/js/[name]-[hash].js",
+        assetFileNames: "assets/[ext]/[name]-[hash].[ext]",
+      },
+    },
+    // Aumentar el límite del warning (opcional, pero mejor optimizar)
+    chunkSizeWarningLimit: 1000,
   },
   esbuild: {
     loader: "jsx",
