@@ -1,8 +1,8 @@
 /// <reference lib="webworker" />
-
+import { BackgroundSyncPlugin } from "workbox-background-sync";
 import { precacheAndRoute, cleanupOutdatedCaches } from "workbox-precaching";
 import { registerRoute } from "workbox-routing";
-import { NetworkFirst, CacheFirst, StaleWhileRevalidate } from "workbox-strategies";
+import { NetworkFirst, CacheFirst, StaleWhileRevalidate, NetworkOnly } from "workbox-strategies";
 import { ExpirationPlugin } from "workbox-expiration";
 import { CacheableResponsePlugin } from "workbox-cacheable-response";
 import { clientsClaim } from "workbox-core";
@@ -131,4 +131,32 @@ registerRoute(
       }),
     ],
   })
+);
+
+const bgSyncPlugin = new BackgroundSyncPlugin("post-queue", {
+  maxRetentionTime: 24 * 60, // Retry for max of 24 Hours (specified in minutes)
+});
+
+registerRoute(
+  new RegExp("http://localhost:4000/api/events"),
+  new NetworkOnly({
+    plugins: [bgSyncPlugin],
+  }),
+  "POST"
+);
+
+registerRoute(
+  new RegExp("http://localhost:4000/api/events/"),
+  new NetworkOnly({
+    plugins: [bgSyncPlugin],
+  }),
+  "DELETE"
+);
+
+registerRoute(
+  new RegExp("http://localhost:4000/api/events/"),
+  new NetworkOnly({
+    plugins: [bgSyncPlugin],
+  }),
+  "PUT"
 );

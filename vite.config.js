@@ -21,13 +21,22 @@ export default defineConfig({
         enabled: true,
         type: "classic",
       },
+      registerType: "autoUpdate",
+      workbox: {
+        cleanupOutdatedCaches: true,
+      },
       manifest: {
         name: "Calendar App",
         short_name: "Calendar",
-        description: "React Calendar Application",
-        theme_color: "#ffffff",
+        description: "React Calendar Application - Manage your events efficiently",
+        theme_color: "#4285f4",
         background_color: "#ffffff",
         display: "standalone",
+        start_url: "/",
+        scope: "/",
+        orientation: "portrait-primary",
+
+        // ✅ Usar los nombres que Chrome está buscando
         icons: [
           {
             src: "/pwa-192x192.png",
@@ -64,28 +73,19 @@ export default defineConfig({
   build: {
     outDir: "dist",
     sourcemap: false,
+    // ✅ Asegurar que se copien las carpetas de public/
+    copyPublicDir: true,
     rollupOptions: {
       output: {
         manualChunks: {
-          // Separar React y React-DOM
           "react-vendor": ["react", "react-dom", "react-router-dom"],
-
-          // Separar Redux si lo usas
           "redux-vendor": ["react-redux", "@reduxjs/toolkit"],
-
-          // Separar librerías de UI si las usas (Bootstrap, etc)
-          // 'ui-vendor': ['bootstrap', 'react-bootstrap'],
-
-          // Separar librerías grandes como moment, date-fns, etc
-          // 'date-vendor': ['moment', 'date-fns'],
         },
-        // Nombres de archivos con hash para mejor caching
         chunkFileNames: "assets/js/[name]-[hash].js",
         entryFileNames: "assets/js/[name]-[hash].js",
         assetFileNames: "assets/[ext]/[name]-[hash].[ext]",
       },
     },
-    // Aumentar el límite del warning (opcional, pero mejor optimizar)
     chunkSizeWarningLimit: 1000,
   },
   esbuild: {
