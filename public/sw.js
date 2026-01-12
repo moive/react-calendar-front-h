@@ -1,7 +1,8 @@
-import { precacheAndRoute } from "workbox-precaching";
-
+// import { precacheAndRoute } from "workbox-precaching";
+importScripts("https://storage.googleapis.com/workbox-cdn/releases/6.5.4/workbox-sw.js");
 // Workbox maneja la precaché automática (workbox-precache-v2)
-precacheAndRoute(self.__WB_MANIFEST || []);
+// precacheAndRoute(self.__WB_MANIFEST || []);
+workbox.precaching.precacheAndRoute(self.__WB_MANIFEST || []);
 
 // URLs de API que tendrán fallback offline
 const apiOfflineFallbacks = [
@@ -29,7 +30,7 @@ self.addEventListener("fetch", (event) => {
         return response.clone();
       })
       .catch((err) => {
-        console.log("[SW] Offline response para:", request.url);
+        console.log("[SW] Offline response for:", request.url);
         return caches.match(request);
       });
 
