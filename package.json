@@ -22,7 +22,8 @@
   },
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview"
+    "build": "npm run clear && vite build",
+    "preview": "npm run build && vite preview",
+    "clear": "rimraf ./dist"
   }
 }
